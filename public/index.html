@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Email Microservice</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --verde:       #1a7a4a;
+      --verde-claro: #e8f5ee;
+      --verde-hover: #155f3a;
+      --cinza:       #f5f6fa;
+      --borda:       #dde1ea;
+      --texto:       #2d2d2d;
+      --muted:       #6b7280;
+      --danger:      #dc2626;
+      --success:     #16a34a;
+      --warning:     #d97706;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--cinza);
+      color: var(--texto);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--verde);
+      color: white;
+      padding: 18px 32px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.18);
+    }
+    header .icon { font-size: 28px; }
+    header h1   { font-size: 20px; font-weight: 700; }
+    header p    { font-size: 12px; opacity: .8; }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    @media (max-width: 780px) {
+      .container { grid-template-columns: 1fr; }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: white;
+      border-radius: 12px;
+      border: 1px solid var(--borda);
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .card-header {
+      background: var(--verde);
+      color: white;
+      padding: 14px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-body { padding: 20px; }
+
+    /* ── Stats ── */
+    .stats-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+    }
+    @media (max-width: 780px) { .stats-grid { grid-template-columns: repeat(2,1fr); grid-column: 1; } }
+    .stat-card {
+      background: white;
+      border-radius: 10px;
+      border: 1px solid var(--borda);
+      padding: 18px;
+      text-align: center;
+    }
+    .stat-card .num  { font-size: 32px; font-weight: 800; color: var(--verde); }
+    .stat-card .lbl  { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+    /* ── Form ── */
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: var(--texto); }
+    input, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--borda);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color .2s;
+      background: var(--cinza);
+    }
+    input:focus, textarea:focus { outline: none; border-color: var(--verde); background: white; }
+    textarea { resize: vertical; min-height: 100px; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: background .2s, transform .1s;
+    }
+    .btn:active { transform: scale(.98); }
+    .btn-primary { background: var(--verde); color: white; width: 100%; justify-content: center; }
+    .btn-primary:hover { background: var(--verde-hover); }
+    .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
+    .btn-sm { padding: 5px 11px; font-size: 12px; }
+    .btn-danger { background: #fee2e2; color: var(--danger); }
+    .btn-danger:hover { background: #fca5a5; }
+    .btn-link { background: var(--verde-claro); color: var(--verde); }
+    .btn-link:hover { background: #c6e8d5; }
+
+    /* ── Alert ── */
+    .alert {
+      padding: 12px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-top: 14px;
+      display: none;
+    }
+    .alert.show { display: block; }
+    .alert-success { background: #dcfce7; color: var(--success); border: 1px solid #bbf7d0; }
+    .alert-error   { background: #fee2e2; color: var(--danger);  border: 1px solid #fca5a5; }
+
+    /* ── Email list ── */
+    .email-list { display: flex; flex-direction: column; gap: 10px; max-height: 500px; overflow-y: auto; }
+    .email-item {
+      border: 1px solid var(--borda);
+      border-radius: 8px;
+      padding: 12px 14px;
+      cursor: pointer;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .email-item:hover { border-color: var(--verde); box-shadow: 0 0 0 2px var(--verde-claro); }
+    .email-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .email-item-to  { font-size: 13px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .email-item-sub { font-size: 12px; color: var(--muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .email-item-date{ font-size: 11px; color: var(--muted); white-space: nowrap; }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .badge-sent    { background: #dcfce7; color: var(--success); }
+    .badge-failed  { background: #fee2e2; color: var(--danger); }
+    .badge-pending { background: #fef9c3; color: var(--warning); }
+
+    .empty-state { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
+    .empty-state .icon { font-size: 40px; display: block; margin-bottom: 10px; }
+
+    /* ── Modal / Detail ── */
+    .modal-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 100;
+      opacity: 0; pointer-events: none;
+      transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: white;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 540px;
+      max-height: 85vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0,0,0,.25);
+      transform: translateY(20px);
+      transition: transform .2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0); }
+    .modal-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 20px; border-bottom: 1px solid var(--borda);
+    }
+    .modal-header h3 { font-size: 16px; }
+    .modal-body { padding: 20px; }
+    .modal-field { margin-bottom: 12px; }
+    .modal-field label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--muted); }
+    .modal-field p { font-size: 14px; margin-top: 3px; word-break: break-all; }
+    .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); padding: 4px; }
+
+    .refresh-btn { background: none; border: none; cursor: pointer; font-size: 16px; margin-left: auto; color: white; opacity: .8; }
+    .refresh-btn:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+
+<header>
+  <span class="icon">📬</span>
+  <div>
+    <h1>Email Microservice</h1>
+    <p>Consumidor — Interface Web | Projeto Arquitetura de Sistemas</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="num" id="stat-total">—</div><div class="lbl">Total de e-mails</div></div>
+    <div class="stat-card"><div class="num" id="stat-sent" style="color:var(--success)">—</div><div class="lbl">Enviados</div></div>
+    <div class="stat-card"><div class="num" id="stat-failed" style="color:var(--danger)">—</div><div class="lbl">Com falha</div></div>
+    <div class="stat-card"><div class="num" id="stat-pending" style="color:var(--warning)">—</div><div class="lbl">Pendentes</div></div>
+  </div>
+
+  <!-- Formulário de envio (Consumidor) -->
+  <div class="card">
+    <div class="card-header">✉️ Compor e Enviar E-mail</div>
+    <div class="card-body">
+      <div class="form-group">
+        <label>Para (destinatário)</label>
+        <input type="email" id="f-to" placeholder="destinatario@exemplo.com" />
+      </div>
+      <div class="form-group">
+        <label>Assunto</label>
+        <input type="text" id="f-subject" placeholder="Assunto do e-mail" />
+      </div>
+      <div class="form-group">
+        <label>Mensagem</label>
+        <textarea id="f-text" placeholder="Digite o conteúdo do e-mail..."></textarea>
+      </div>
+      <button class="btn btn-primary" id="send-btn" onclick="sendEmail()">
+        <span>📤</span> Enviar E-mail
+      </button>
+      <div class="alert alert-success" id="alert-success"></div>
+      <div class="alert alert-error"   id="alert-error"></div>
+    </div>
+  </div>
+
+  <!-- Lista de e-mails (Consumidor listando dados do Provedor) -->
+  <div class="card">
+    <div class="card-header">
+      📋 Histórico de E-mails
+      <button class="refresh-btn" onclick="loadEmails()" title="Atualizar">🔄</button>
+    </div>
+    <div class="card-body">
+      <div class="email-list" id="email-list">
+        <div class="empty-state">
+          <span class="icon">📭</span>
+          Carregando e-mails...
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal de detalhes -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Detalhes do E-mail</h3>
+      <button class="btn-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+  const API = "/api/emails";
+
+  // ── Utilitários ──────────────────────────────────────────────────────────────
+  function fmt(iso) {
+    if (!iso) return "—";
+    return new Date(iso).toLocaleString("pt-BR");
+  }
+  function badge(status) {
+    const map = { sent: "badge-sent", failed: "badge-failed", pending: "badge-pending" };
+    const label = { sent: "Enviado", failed: "Falhou", pending: "Pendente" };
+    return `<span class="badge ${map[status] || ""}">${label[status] || status}</span>`;
+  }
+  function showAlert(type, msg) {
+    ["alert-success","alert-error"].forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove("show");
+      el.textContent = "";
+    });
+    const el = document.getElementById(`alert-${type}`);
+    el.textContent = msg;
+    el.classList.add("show");
+    setTimeout(() => el.classList.remove("show"), 6000);
+  }
+
+  // ── Enviar e-mail ────────────────────────────────────────────────────────────
+  async function sendEmail() {
+    const to      = document.getElementById("f-to").value.trim();
+    const subject = document.getElementById("f-subject").value.trim();
+    const text    = document.getElementById("f-text").value.trim();
+    const btn     = document.getElementById("send-btn");
+
+    if (!to || !subject || !text) {
+      showAlert("error", "Preencha todos os campos antes de enviar.");
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = "<span>⏳</span> Enviando...";
+
+    try {
+      const res  = await fetch(API, {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ to, subject, text }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Erro ao enviar.");
+
+      let msg = "E-mail enviado com sucesso!";
+      if (data.previewUrl) msg += ` <a href="${data.previewUrl}" target="_blank">Ver e-mail →</a>`;
+      document.getElementById("alert-success").innerHTML = msg;
+      document.getElementById("alert-success").classList.add("show");
+      setTimeout(() => document.getElementById("alert-success").classList.remove("show"), 8000);
+
+      // Limpa o formulário
+      ["f-to","f-subject","f-text"].forEach(id => document.getElementById(id).value = "");
+      loadEmails();
+    } catch (err) {
+      showAlert("error", err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = "<span>📤</span> Enviar E-mail";
+    }
+  }
+
+  // ── Listar e-mails ───────────────────────────────────────────────────────────
+  async function loadEmails() {
+    const list = document.getElementById("email-list");
+    try {
+      const res  = await fetch(API);
+      const data = await res.json();
+
+      // Atualiza stats
+      await loadStats();
+
+      if (!data.emails || data.emails.length === 0) {
+        list.innerHTML = `<div class="empty-state"><span class="icon">📭</span>Nenhum e-mail registrado ainda.</div>`;
+        return;
+      }
+
+      list.innerHTML = data.emails.map(e => `
+        <div class="email-item" onclick="showDetail('${e.id}')">
+          <div class="email-item-top">
+            <span class="email-item-to">📨 ${e.to}</span>
+            ${badge(e.status)}
+          </div>
+          <div class="email-item-sub">📌 ${e.subject}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;">
+            <span class="email-item-date">🕐 ${fmt(e.createdAt)}</span>
+            <button class="btn btn-sm btn-danger" onclick="deleteEmail(event,'${e.id}')">🗑 Remover</button>
+          </div>
+        </div>
+      `).join("");
+    } catch {
+      list.innerHTML = `<div class="empty-state"><span class="icon">⚠️</span>Erro ao carregar e-mails.</div>`;
+    }
+  }
+
+  // ── Stats ────────────────────────────────────────────────────────────────────
+  async function loadStats() {
+    try {
+      const res  = await fetch(`${API}/stats`);
+      const data = await res.json();
+      document.getElementById("stat-total").textContent   = data.total   ?? "—";
+      document.getElementById("stat-sent").textContent    = data.sent    ?? "—";
+      document.getElementById("stat-failed").textContent  = data.failed  ?? "—";
+      document.getElementById("stat-pending").textContent = data.pending ?? "—";
+    } catch { /* silencioso */ }
+  }
+
+  // ── Detalhe ──────────────────────────────────────────────────────────────────
+  async function showDetail(id) {
+    try {
+      const res  = await fetch(`${API}/${id}`);
+      const e    = await res.json();
+      document.getElementById("modal-body").innerHTML = `
+        <div class="modal-field"><label>Para</label><p>${e.to}</p></div>
+        <div class="modal-field"><label>Assunto</label><p>${e.subject}</p></div>
+        <div class="modal-field"><label>Mensagem</label><p style="white-space:pre-wrap">${e.text}</p></div>
+        <div class="modal-field"><label>Status</label><p>${badge(e.status)}</p></div>
+        <div class="modal-field"><label>Enviado em</label><p>${fmt(e.createdAt)}</p></div>
+        <div class="modal-field"><label>Message ID</label><p>${e.messageId || "—"}</p></div>
+        ${e.previewUrl ? `<div class="modal-field"><label>Preview</label><p><a href="${e.previewUrl}" target="_blank" style="color:var(--verde)">Visualizar e-mail no browser →</a></p></div>` : ""}
+        ${e.error ? `<div class="modal-field"><label>Erro</label><p style="color:var(--danger)">${e.error}</p></div>` : ""}
+        <div style="margin-top:16px;display:flex;gap:10px;">
+          ${e.previewUrl ? `<a href="${e.previewUrl}" target="_blank" class="btn btn-link btn-sm">🔍 Ver e-mail</a>` : ""}
+          <button class="btn btn-danger btn-sm" onclick="deleteEmail(null,'${e.id}',true)">🗑 Remover registro</button>
+        </div>
+      `;
+      document.getElementById("modal-overlay").classList.add("open");
+    } catch { alert("Erro ao carregar detalhes."); }
+  }
+
+  // ── Delete ───────────────────────────────────────────────────────────────────
+  async function deleteEmail(event, id, fromModal = false) {
+    if (event) event.stopPropagation();
+    if (!confirm("Remover este registro?")) return;
+    await fetch(`${API}/${id}`, { method: "DELETE" });
+    if (fromModal) closeModal();
+    loadEmails();
+  }
+
+  // ── Modal ────────────────────────────────────────────────────────────────────
+  function closeModal(event) {
+    if (event && event.target !== document.getElementById("modal-overlay")) return;
+    document.getElementById("modal-overlay").classList.remove("open");
+  }
+
+  // ── Init ─────────────────────────────────────────────────────────────────────
+  loadEmails();
+  setInterval(loadStats, 10000); // Atualiza stats a cada 10s
+</script>
+</body>
+</html>
