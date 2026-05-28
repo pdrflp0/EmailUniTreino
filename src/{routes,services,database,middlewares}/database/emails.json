@@ -1,0 +1,17 @@
+{
+  "emails": [
+    {
+      "id": "a19194ec-1618-499a-aa5c-77b49cd42cfd",
+      "to": "yopai1lol@gmail.com",
+      "subject": "Teste",
+      "text": "Teste",
+      "html": "",
+      "status": "sent",
+      "messageId": "<e4174f2f-1400-573d-1049-f685a31cceb8@ethereal.email>",
+      "previewUrl": "https://ethereal.email/message/ag99PY5FEF1TsKAQag99fu34-QXMkZrfAAAAAWZEjglaxGkYlAUfdxNIPUc",
+      "error": null,
+      "createdAt": "2026-05-21T21:47:33.084Z",
+      "updatedAt": "2026-05-21T21:47:39.213Z"
+    }
+  ]
+}
