@@ -2,7 +2,7 @@
 
 Microserviço de envio e gerenciamento de e-mails desenvolvido para a disciplina de **Arquitetura de Sistemas — UNIFOR**.
 
-## 🚀 Como executar
+## Como executar
 
 ```bash
 # 1. Instale as dependências
@@ -17,7 +17,7 @@ npm start
 
 Acesse: **http://localhost:3001**
 
-## 🔌 API — Endpoints (Provedor)
+## API — Endpoints (Provedor)
 
 | Método   | Rota                  | Descrição                         | Auth |
 |----------|-----------------------|-----------------------------------|------|
